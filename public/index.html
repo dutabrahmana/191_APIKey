@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generator API Key - Hikmatyar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    /* CSS Styling untuk tampilan yang menarik */
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f0f8ff, #ffc0cb); /* Light Blue & Pink */
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-size: 300% 300%;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      padding: 40px;
+      width: 400px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #34495e; /* Navy Blue */
+      margin-bottom: 25px;
+      font-size: 1.8em;
+      font-weight: 800;
+    }
+
+    label {
+      display: block;
+      text-align: left;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #555;
+      font-size: 0.95em;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      box-sizing: border-box;
+      font-size: 1em;
+    }
+
+    /* Styling untuk tombol utama */
+    #createButton {
+      background: linear-gradient(45deg, #e91e63, #ff4081); /* Pink Gradient */
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 25px;
+      font-size: 1em;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      width: 100%;
+      box-shadow: 0 4px 10px rgba(233, 30, 99, 0.4);
+      margin-top: 10px;
+    }
+
+    #createButton:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(233, 30, 99, 0.6);
+    }
+
+    /* Container API Key dan Tombol Copy */
+    .key-output {
+      margin-top: 30px;
+      padding: 20px;
+      border: 1px dashed #ccc;
+      border-radius: 10px;
+      background: #f8f9fa;
+      position: relative;
+    }
+
+    #apiKeyOutput {
+      word-wrap: break-word; /* Memastikan key panjang tidak melebihi container */
+      font-family: monospace;
+      font-size: 1em;
+      color: #007bff;
+      font-weight: bold;
+      min-height: 20px;
+      text-align: left;
+    }
+
+    #copyButton {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 5px 10px;
+      border: none;
+      background: #3498db;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8em;
+      transition: background 0.2s;
+    }
+
+    #copyButton:hover {
+      background: #2980b9;
+    }
+
+    #statusMessage {
+      margin-top: 15px;
+      font-weight: 600;
+      color: #e91e63;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔑 API Key Generator </h1>
+
+    <label for="serviceNameInput">Nama Layanan / Aplikasi:</label>
+    <input type="text" id="serviceNameInput" placeholder="Contoh: Aplikasi Pembayaran Mobile" />
+    
+    <div id="statusMessage"></div>
+
+    <button id="createButton" onclick="createApiKey()">Generate & Save Key</button>
+
+    <div class="key-output">
+      <p id="apiKeyOutput">Key akan muncul di sini setelah dibuat...</p>
+      <button id="copyButton" onclick="copyApiKey()" style="display: none;">Copy Key</button>
+    </div>
+
+    <footer>Dibuat dengan Express.js oleh Duta Aja</footer>
+  </div>
+
+  <script>
+    const statusMessage = document.getElementById('statusMessage');
+    const serviceNameInput = document.getElementById('serviceNameInput');
+    const apiKeyOutput = document.getElementById('apiKeyOutput');
+    const copyButton = document.getElementById('copyButton');
+    const createButton = document.getElementById('createButton');
+    const API_URL = '/create'; // Endpoint di server.js
+
+    // --- FUNGSI COPY API KEY ---
+    function copyApiKey() {
+      const key = apiKeyOutput.textContent;
+      if (key && key !== 'Key akan muncul di sini setelah dibuat...') {
+        // Menggunakan Clipboard API modern
+        navigator.clipboard.writeText(key).then(() => {
+          copyButton.textContent = 'Copied!';
+          setTimeout(() => { copyButton.textContent = 'Copy Key'; }, 2000);
+        }).catch(err => {
+          console.error('Gagal menyalin:', err);
+          alert('Gagal menyalin key.');
+        });
+      }
+    }
+
+    // --- FUNGSI UTAMA UNTUK MEMBUAT API KEY ---
+    async function createApiKey() {
+      const serviceName = serviceNameInput.value.trim();
+
+      if (!serviceName) {
+        statusMessage.textContent = '❌ Service name wajib diisi!';
+        statusMessage.style.color = '#ff4081';
+        return;
+      }
+      
+      statusMessage.textContent = 'Membuat kunci dan menyimpan...';
+      statusMessage.style.color = '#3498db';
+      createButton.disabled = true; // Nonaktifkan tombol
+      apiKeyOutput.textContent = 'Generating...';
+      copyButton.style.display = 'none';
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ service_name: serviceName }) // Kirim service_name
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Sukses dibuat dan disimpan
+          apiKeyOutput.textContent = data.apiKey;
+          statusMessage.textContent = '✅ API Key berhasil dibuat & disimpan!';
+          statusMessage.style.color = '#27ae60';
+          copyButton.style.display = 'inline'; // Tampilkan tombol copy
+        } else {
+          // Gagal dari server (misal: error database)
+          apiKeyOutput.textContent = `Error: ${data.error || data.message}`;
+          statusMessage.textContent = '❌ Gagal menyimpan key! Cek konsol server.';
+          statusMessage.style.color = '#e74c3c';
+        }
+
+      } catch (error) {
+        // Gagal koneksi (misal: server mati)
+        console.error('Koneksi Gagal:', error);
+        apiKeyOutput.textContent = 'Koneksi ke server gagal.';
+        statusMessage.textContent = '❌ Koneksi ke server gagal! Pastikan Node.js berjalan.';
+        statusMessage.style.color = '#e74c3c';
+      } finally {
+        createButton.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
